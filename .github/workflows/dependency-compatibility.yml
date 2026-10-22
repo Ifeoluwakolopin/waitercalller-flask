@@ -1,0 +1,45 @@
+name: Dependency compatibility
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version-file: .python-version
+      - name: Install and verify pinned dependencies
+        run: |
+          python -m pip install --disable-pip-version-check --no-cache-dir pip==26.2.2 setuptools==84.2.1
+          python -m pip install --disable-pip-version-check --no-cache-dir -r requirements.txt
+          python -m pip check
+          python -m pip list --format=json
+      - name: Compile and check the existing endpoint without external services
+        run: |
+          python -m compileall -q waitercaller.py user.py
+          python - <<'PY'
+          import flask_login
+          from user import User
+          from waitercaller import app
+
+          with app.test_client() as client:
+              response = client.get("/")
+              assert response.status_code == 200
+              assert response.get_data(as_text=True) == "Under construction"
+              assert client.head("/").status_code == 200
+              assert client.post("/").status_code == 405
+              assert client.get("/missing-smoke-path").status_code == 404
+          print("Flask-Login import and existing root HTTP contract passed.")
+          print("No authentication or database integration is configured by this app.")
+          PY
