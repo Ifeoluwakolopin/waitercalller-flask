@@ -1,0 +1,22 @@
+Use Python 3.11.17, pinned in .python-version, with an isolated environment.
+
+    python -m venv .venv
+    .venv/bin/python -m pip install --upgrade pip==26.2.2 setuptools==84.2.1
+    .venv/bin/python -m pip install -r requirements.txt
+    .venv/bin/python -m pip check
+    .venv/bin/python -m compileall -q waitercaller.py user.py
+
+The application remains an "Under construction" root endpoint. The User
+interface is unchanged. Flask-Login is retained and updated to 0.6.3 for
+Flask/Werkzeug 3 compatibility; the application does not yet configure a
+LoginManager or authentication routes. No database integration is configured.
+Flask, Werkzeug and Jinja2 are pinned to patched releases.
+
+The GitHub-hosted dependency compatibility workflow installs the pins on the
+declared Python version, compiles the existing modules, imports Flask-Login,
+and checks the existing endpoint with Flask's in-process HTTP client.
+It does not load credentials, connect to services, or deploy.
+
+There is no committed test suite or deployment workflow. Compile/import checks
+and the HTTP smoke check do not demonstrate production integration.
+The built-in debug server is for local development only.
